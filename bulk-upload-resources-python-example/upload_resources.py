@@ -19,12 +19,12 @@ config = RawConfigParser()
 config.read(config_path)
 
 
-def get_auth(config):
+def get_auth(config: RawConfigParser):
     """ Get the authentication out of our config file """
     return config.get("domain", "client-key"), config.get("domain", "client-secret")
 
 
-def convert_datetime_to_epoch(datetime_string):
+def convert_datetime_to_epoch(datetime_string: str):
     """ Converts the datetime to epoch in miliseconds there are two possible time formats"""
     try:
         return datetime.strptime(datetime_string, '%Y-%m-%dT%H:%M:%SZ').timestamp() * 1000
@@ -32,7 +32,7 @@ def convert_datetime_to_epoch(datetime_string):
         return datetime.strptime(datetime_string, '%Y-%m-%dT%H:%M:%S.%fZ').timestamp() * 1000
 
 
-def transform_data(data):
+def transform_data(data: pandas.DataFrame):
     """Transforms data from the csv format to the expected format bij the api"""
     data['timestamp'] = data['timestamp'].apply(
         lambda x: convert_datetime_to_epoch(x))
@@ -50,10 +50,10 @@ def chunck_to_message(chunck):
     return chunck
 
 
-def send_messages(data_json_array, config: RawConfigParser):
+def send_messages(data_json_array: list, config: RawConfigParser):
     """Sends the json array to the waylay vendor in chunks of specific length (as defined in config)"""
     auth = get_auth(config)
-    chunck_size = int(config.get('domain', 'values-per-post'))
+    chunck_size = int(config.get('network', 'values-per-post'))
     sent = 0
     total = len(data_json_array)
     while len(data_json_array):
@@ -77,9 +77,10 @@ def send_bulk_data(data: pandas.DataFrame, config: RawConfigParser):
     send_messages(data_json_array, config)
 
 
-def run(csv_file_path, config):
+def run(csv_file_path: str, config: RawConfigParser):
     data = pandas.read_csv(csv_file_path, sep=",")
     data = transform_data(data)
     send_bulk_data(data, config)
+
 
 run(csv_file_path, config)
