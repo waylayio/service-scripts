@@ -1,0 +1,6 @@
+[domain]
+data-path = https://data-staging.waylay.io
+resource-path = https://staging.waylay.io
+client-key = d596e2844bc0ee9500070d37
+client-secret = 6/Wr0XVnT+yvODLlRxEbpvC9SyyhDzaN
+values-per-post = 200

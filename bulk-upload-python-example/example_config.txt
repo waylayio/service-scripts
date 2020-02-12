@@ -1,5 +1,5 @@
 [domain]
 data-path = https://data.waylay.io
-resource-path = https://your-environment.waylay.io
+resource-path = https://staging.waylay.io
 client-key = your-key
 client-secret = your-secret
