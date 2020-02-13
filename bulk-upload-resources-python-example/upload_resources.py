@@ -70,6 +70,19 @@ def send_messages(data_json_array: list, config: RawConfigParser):
             print('Sent ' + str(sent) + ' of ' + str(total))
 
 
+def create_resource(resource_name: str, config: RawConfigParser):
+    """ Create a resource """
+
+    auth = get_auth(config)
+    resp = requests.post(config.get("domain", "resource-path") + "/api/resources/", auth=auth, json={
+        "id": resource_name,
+        "name": resource_name
+    })
+
+    if not resp.ok:
+        raise ConnectionError("Creating resource failed.", resp.json())
+
+
 def send_bulk_data(data: pandas.DataFrame, config: RawConfigParser):
     """Transforms data to json array and sends it to waylay service"""
     data_json_str = data.to_json(orient='records')
@@ -77,9 +90,20 @@ def send_bulk_data(data: pandas.DataFrame, config: RawConfigParser):
     send_messages(data_json_array, config)
 
 
+def create_resources(data: pandas.DataFrame, config: RawConfigParser):
+    resource_name_list = data['resource'].unique()
+    for resource_name in resource_name_list:
+        try:
+            create_resource(resource_name, config)
+            print('Created resource ' + str(resource_name))
+        except:
+            print('Resource ' + str(resource_name) + ' already exists')
+
+
 def run(csv_file_path: str, config: RawConfigParser):
     data = pandas.read_csv(csv_file_path, sep=",")
     data = transform_data(data)
+    create_resources(data, config)
     send_bulk_data(data, config)
 
 
