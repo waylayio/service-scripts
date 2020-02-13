@@ -1,8 +1,10 @@
 import sys
-import pandas
-import numpy as np
 from configparser import RawConfigParser
+
+import numpy as np
+import pandas
 import requests
+from requests import HTTPError
 
 if len(sys.argv) < 3:
     print("Usage: `python ./main.py <csv-path> <resource_id> <configuration-path>`")
@@ -31,9 +33,7 @@ def send_messages(data: pandas.DataFrame, config: RawConfigParser, chunk_size: i
         messages = chunk.to_dict("records")
 
         resp = requests.post("%s/messages?store=true&forward=false" % (config.get("domain", "data-path")), json=messages, auth=auth)
-
-        if not resp.ok:
-            raise ConnectionError("Uploading messages failed.", resp.json())
+        _validate_response(resp, "Uploading messages failed.")
 
 
 def get_metric_definition(name: str, data: pandas.Series):
@@ -57,10 +57,17 @@ def create_resource(resource_name: str, data: pandas.DataFrame, config: RawConfi
         "name": resource_name,
         "metrics": metrics,
     })
+    _validate_response(resp, "Creating resource failed.")
 
-    if not resp.ok:
-        raise ConnectionError("Creating resource failed.", resp.json())
-
+def _validate_response(resp, error_text):
+    try:
+        resp.raise_for_status()
+    except HTTPError as http_error:
+        try:
+            json_data = resp.json()
+            raise ConnectionError(error_text, json_data)
+        except ValueError:
+            raise http_error
 
 def run(input_path: str, resource_name: str, config: RawConfigParser):
     """ Create a resource and pre-process the messages """

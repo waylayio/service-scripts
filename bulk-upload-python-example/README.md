@@ -13,7 +13,11 @@
 
 2. Create a config, you can start from the `config_example.txt`.
 
-3. Make sure [python3](https://www.python.org/downloads/) with [pandas](https://pandas.pydata.org/) is installed.
+3. Make sure [python3](https://www.python.org/downloads/) is installed, and install the additional requirements.
+
+    ```
+    pip install -r requirements.txt
+    ```
 
 4. Run the script:
 
