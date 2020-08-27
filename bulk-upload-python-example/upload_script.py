@@ -1,6 +1,6 @@
 import sys
+import math
 from configparser import RawConfigParser
-
 import numpy as np
 import pandas
 import requests
@@ -23,7 +23,7 @@ def get_auth(config: RawConfigParser):
     return config.get("domain", "client-key"), config.get("domain", "client-secret")
 
 
-def send_messages(data: pandas.DataFrame, config: RawConfigParser, chunk_size: int = 1000):
+def send_messages(data: pandas.DataFrame, config: RawConfigParser, chunk_size: int = 100):
     """ Bulk send messages to the broker """
 
     auth = get_auth(config)
@@ -31,6 +31,7 @@ def send_messages(data: pandas.DataFrame, config: RawConfigParser, chunk_size: i
         chunk = data[:chunk_size]
         data = data[chunk_size:]
         messages = chunk.to_dict("records")
+        messages = [{k: x[k] for k in x if isinstance(x[k], str) or not math.isnan(x[k])} for x in messages]
 
         resp = requests.post("%s/messages?store=true&forward=false" % (config.get("domain", "data-path")), json=messages, auth=auth)
         _validate_response(resp, "Uploading messages failed.")
@@ -59,6 +60,7 @@ def create_resource(resource_name: str, data: pandas.DataFrame, config: RawConfi
     })
     _validate_response(resp, "Creating resource failed.")
 
+
 def _validate_response(resp, error_text):
     try:
         resp.raise_for_status()
@@ -68,6 +70,7 @@ def _validate_response(resp, error_text):
             raise ConnectionError(error_text, json_data)
         except ValueError:
             raise http_error
+
 
 def run(input_path: str, resource_name: str, config: RawConfigParser):
     """ Create a resource and pre-process the messages """
